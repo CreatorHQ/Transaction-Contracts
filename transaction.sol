@@ -7,15 +7,20 @@ contract Transactions {
     uint256 min_val = 100000; // To be set later with the help of chainlink
     uint8 transaction_percentage = 5; // make it such that 
     
-    function cryptoTransaction(address payable to_address) public payable {
-        if(msg.value < min_val) {
-            revert();
+    
+    function sendToAddress(address payable to_address, uint256 send_amount) public {
+        to_address.transfer(send_amount);
+    }
+    
+    function cryptoTransaction(address to_address) public payable {
         uint256 send_amount = msg.value - (msg.value * transaction_percentage / 100);
         amountToAddress[to_address] += send_amount;
-        to_address.transfer(send_amount);
-        
-        }
+        address payable send_address = payable(to_address);
+        sendToAddress(send_address, send_amount);
     }
+        
+
+
     
     // // Withdraw ETH from the contract
     // function withdrawEther() public payable onlyOwner() {
