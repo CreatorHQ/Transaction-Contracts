@@ -1,10 +1,16 @@
 pragma solidity ^0.8.0;
 
-contract Transactions {
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Transactions is Ownable {
     
     mapping(address => uint256) private amountToAddress;
     uint256 private num_transactions = 0;
     
+    modifier checkBalance(uint256 _balance) {
+        require(_balance > 0);
+        _;
+    }
     
     uint256 min_val = 100000; // To be set later with the help of chainlink
     uint8 transaction_percentage = 5; // make it such that 
@@ -27,14 +33,14 @@ contract Transactions {
         return address(this).balance;
     }
     
-    // // Withdraw ETH from the contract
-    // function withdrawEther() public payable onlyOwner() {
-    //     if (ethToWithdraw > 0) {
-    //         address payable owner = payable(owner());
-    //         sendCrypto(owner, ethToWithdraw);
-    //         ethToWithdraw = 0;
-    //     }
-    // }
+
+    // Withdraw ETH from the contract
+    function withdrawEther() public payable onlyOwner() {
+        if (address(this).balance > 0) {
+            address payable owner = payable(owner());
+            sendToAddress(owner, address(this).balance);
+        }
+    }
     
     // // Check the balance in the contract
     // function checkBalance() public view onlyOwner() returns(uint) {
