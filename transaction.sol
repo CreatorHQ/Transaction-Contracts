@@ -7,52 +7,51 @@ contract Transactions is Ownable {
     mapping(address => uint256) private amountToAddress;
     uint256 private num_transactions = 0;
     
-    modifier checkBalance(uint256 _balance) {
-        require(_balance > 0);
+    uint256 min_val = 100000; // To be set later with the help of chainlink
+    uint8 transactionFeePercentage = 5; // make it such that
+    uint256 totalTransactionAmount = 0;
+    
+    modifier checkBalance() {
+        require(address(this).balance > 0);
         _;
     }
     
-    uint256 min_val = 100000; // To be set later with the help of chainlink
-    uint8 transaction_percentage = 5; // make it such that 
     
+    function setTransactionFee(uint8 _transactionFeePercentage) public onlyOwner() {
+        transactionFeePercentage = _transactionFeePercentage;
+    }
     
     function sendToAddress(address payable to_address, uint256 send_amount) private {
         to_address.transfer(send_amount);
     }
     
     function cryptoTransaction(address to_address) public payable {
-        uint256 send_amount = msg.value - (msg.value * transaction_percentage / 100);
+        uint256 send_amount = msg.value - (msg.value * transactionFeePercentage / 100);
         amountToAddress[to_address] += send_amount;
         address payable send_address = payable(to_address);
         sendToAddress(send_address, send_amount);
+        totalTransactionAmount += msg.value;
         num_transactions++;
     }
     
-    //Add onlyOwner to it
-    function viewAccountBalance() public view returns (uint256) {
+    //View Balance in smart contract
+    function viewAccountBalance() public view onlyOwner() returns (uint256) {
         return address(this).balance;
     }
     
 
     // Withdraw ETH from the contract
-    function withdrawEther() public payable onlyOwner() {
-        if (address(this).balance > 0) {
-            address payable owner = payable(owner());
-            sendToAddress(owner, address(this).balance);
-        }
+    function withdrawEther() public payable onlyOwner() checkBalance() {
+        address payable owner = payable(owner());
+        sendToAddress(owner, address(this).balance);
+    }
+
+    // Show Transaction percentage fee
+    function displayTransactionFee() public view returns(uint8) {
+        return transactionFeePercentage;
     }
     
-    // // Check the balance in the contract
-    // function checkBalance() public view onlyOwner() returns(uint) {
-    //     return address(this).balance;
-    // }
-    // // Check how much ETH can be withdrawn by the owner
-    // function checkEthToWithdraw() public view onlyOwner() returns(uint256) {
-    //     return ethToWithdraw;
-    // }
-
-    // // Show Transaction percentage fee
-    // function displayTransactionFee() public view returns(uint8) {
-    //     return transactionFeePercentage;
-    // }
+    function viewTotalTransactions() public view onlyOwner() returns(uint256) {
+        return num_transactions;
+    }
 }
